@@ -1,123 +1,315 @@
-import { makeButton, makePlayable, disableEnableButtons, buttonReset, makeActionButton, addRaceWatchForBtns, removeRaceWatchForBtns } from "./button";
-import columns from './columns.css';
-import {  fromEvent, Subject, combineLatest } from 'rxjs';
-import _button_texts from './button.texts';
-import { map } from 'rxjs/operators';
-import referee from './referee';
-import resetRound from './resetRound';
-import bordGenerator from './bordGenerator';
-import timmerDom from './timmer.dom';
-import player from './player';
-import gameWord from './gameWord';
 
-const playground = document.getElementById("playground");
+import fadeCss from './fade.css';
+import fade from './fade';
+import { identityf, addf, liftf } from './identity';
+import { add, mul, sub } from './calc';
+import { curry, curryE6 } from './curry';
+import twice from './twice';
+import {addg, liftg, arrayg} from './addg';
+import { continuize, continuize6 } from './continuize';
+
+fade("idFade");
+setTimeout(function () {
+    fade("idFade2");
+
+}, 2000)
+
+function reverse(binary) {
+    return function (first, secound) {
+        return binary(secound, first);
+    }
+}
+
+function square(a) {
+    return mul(a, a);
+}
+function doubl(a) {
+    return add(a, a);
+}
+
+function composeu(fn1, fn2) {
+    return function (a) {
+        return fn2(fn1(a));
+    }
+}
+
+function composeb(f, g) {
+    return function (a, b, c) {
+        return g(f(a, b), c);
+    }
+}
+
+function limit(binary, count) {
+    return function (a, b) {
+        if (count >= 1) {
+            count -= 1;
+            return binary(a, b);
+        }
+        return undefined;
+    }
+}//function that is called for a nr of times
+
+function fromS(start) {
+    return function () {
+        var next = start;
+        start += 1;
+        return next;
+    }
+}
 
 
-var _other = {
-    action_button_class: "act-btn",
-    wait_for : 9
-};
+function to(generator, a) {
+    return function () {
+        let v = generator()
+        if (v < a) {
+            return v;
+        }
+        return undefined;
+    }
+}
 
-/**
- * @var notifier - subject that is publishing events related to play/challenge states
- */
-var notifier = new Subject();
-var ply1 = player('player 1'),
-    ply2 = player('player 2');
-
-makeActionButton (makeButton, _button_texts.start, _other.action_button_class, ply1, ply2, notifier);
-makeActionButton (makeButton, _button_texts.start, _other.action_button_class, ply2, ply1, notifier);
-gameWord.addPlayer(ply1)
-gameWord.addPlayer(ply2);
+function fromTo(init, end) {
+    return to(fromS(init), end);
+}
 
 
-/**
- * @method subscribe handles click events on the action buttons, check if the game is ready to be played, players have accepted, 
- * it also handles timer, that controls the round, it will reset the round in 9 seconds regarldess number of answers
- */
-notifier.subscribe((message) => {
-    if (message) {
-        if (gameWord) {
-            /** initial state of the game is idle, it will move to challenge when any of the players pushes the button */
-            if (gameWord.current_state === "idle") {
-                gameWord.current_state = gameWord.states[1]; // to challage state
-                message.player.possible_actions = [];
-                message.player.buttons.game.disabled = true;
-                //change message to other player:
-                message.other.buttons.game.innerHTML = _button_texts.ready;
-                return;
-            }
-            /** if this condition is passed the  game is `on` the 3 assets buttons will be available for 9 seconds*/
-            if (gameWord.current_state === "challenge") {
-                gameWord.current_state = gameWord.states[2]; // the challenger accepted
-                message.player.buttons.game.disabled = true;
-                message.player.possible_actions = [];
-                message.player.buttons.game.innerHTML = _button_texts.go;
-                message.other.buttons.game.innerHTML = _button_texts.go;
-                disableEnableButtons(message.player.buttons.assets, false);
-                disableEnableButtons(message.other.buttons.assets, false);
-                addRaceWatchForBtns(message.player);
-                addRaceWatchForBtns(message.other);
-                gameWord.controllAnswers = combineLatest(message.player.acted, message.other.acted);
-                /**
-                 * the 3 controls per players are wrapped insde a  rxjs/race  observable
-                 * when both of the group are clicked: rxjs/all is triggered, the subscriber below, this will change the score, and reset round
-                 */
-                let allSub = gameWord.controllAnswers.subscribe((allAnswers) => {
-                    let winer_nr = referee(...allAnswers);
-                    if (!isNaN(winer_nr) && winer_nr !== null) {
-                        gameWord.players[winer_nr].score++;
-                        gameWord.players[winer_nr].scoreElement.innerHTML = gameWord.players[winer_nr].score;
-                    }
-                    allSub.unsubscribe();
-                    //stoping counter and reseting the state
-                     resetRound(disableEnableButtons, buttonReset, message, gameWord);
-                });
-                /** @method  timmerSubscriber watch over the counter, if it's reach it resets
-                 * @method gameWord.timmer it's a interval rxjs observable that emmits each second
-                */
-                gameWord.timmerSubscriber = gameWord.timmer.subscribe((count) => {
-                    if (count == _other.wait_for) {
-                        resetRound(disableEnableButtons, buttonReset, message, gameWord);
-                    } else {
-                        document.getElementById("seconds_nr").innerHTML = _other.wait_for -count;
-                    }
-                })
-                return;
-            }
+function element(array, gen) {
+    if (gen === undefined) {
+        gen = function () {
+            return fromTo(0, array.length);
         }
     }
-})
-
-
-/**
- * @var bord  is the DOM element/component of the application
- * @var p_board  is a DOM element that has the structure for a player/buttons/score/name
- * @var h2 observrable will emit the player and it's play(assets) of the 3
- */
-let bord = bordGenerator('bord-wrapper', 'row', 1, 'column', 3);
-for (let p = 0; p < gameWord.players.length; p++) {
-    let p_board = bordGenerator('empty', 'bord-player', 1, ['player-action', 'player', 'player-score', 'blue-column'], 4);
-    for (let i = 0; i < gameWord.game_assets.length; i++) {
-        let _temp = makePlayable(gameWord.game_assets[i].name),
-            _temp_wrapper = document.createElement('div');
-        _temp_wrapper.classList.add('buttons-wrapper');
-        gameWord.players[p].buttons.assets.push(_temp);
-        let handler = fromEvent(_temp, 'click');
-        let h2 = handler.pipe(map(event => { return { play: gameWord.game_assets[i], player: p } }));
-        gameWord.players[p].actions.push(h2);
-        _temp_wrapper.appendChild(_temp)
-        p_board.logic.rows[0].cols[3].appendChild(_temp_wrapper);
-    } //end game assets;
-    p_board.logic.rows[0].cols[0].appendChild(gameWord.players[p].buttons.game);
-    p_board.logic.rows[0].cols[1].innerHTML = gameWord.players[p].name;
-    p_board.logic.rows[0].cols[2].innerHTML = gameWord.players[p].score;
-    gameWord.players[p].scoreElement = p_board.logic.rows[0].cols[2];
-    gameWord.players[p].dom = p_board;
-    //initial state of the buttons is set to disabled; they could be hidden and animated as enhancement 
-    disableEnableButtons(gameWord.players[p].buttons.assets, true);
-    if (p === 0) bord.logic.rows[0].cols[0].appendChild(p_board.dom) 
-    if (p === 1) bord.logic.rows[0].cols[2].appendChild(p_board.dom)
+    return function () {
+        var index = gen();
+        if (index !== undefined) {
+            return array[index];
+        }
+    }
 }
-    bord.logic.rows[0].cols[1].innerHTML = timmerDom(); //dummy html to show the timer, a more elegant structure might be created :)  
-    playground.appendChild(bord.dom);
+
+
+
+function collect(gen, array) {
+    return function () {
+        var value = gen();
+        if (value !== undefined) {
+            array.push(value);
+        }
+        return value;
+    }
+}
+
+function filter(gen, predicate) {
+    return function () {
+        var value;
+        do {
+            console.log(typeof gen);
+            value = gen();
+        }
+        while (value !== undefined && !predicate(value));
+        return value;
+    }
+}
+
+function concat(gen1, gen2) {
+    var gen = gen1;
+    return function() {
+        var value = gen();
+        if (value!==undefined) {
+            return value;
+        }
+        gen = gen2;
+        return gen();
+    }
+}
+
+function gensymf(prefix) {
+    var number=0;
+    return function() {
+        number+=1;
+        return prefix+ number;
+    }
+}
+
+function gensymf2(prefix) {
+    var number=fromS(1);
+    return function() {
+        return prefix+ number();
+    }
+}
+
+function fibonaccif(a,b) {
+    var i=0;
+
+    return function() {
+        var next;
+        switch(i) {
+            case 0:
+                i=1;
+                return a;
+            case 1:
+                i=2;
+                return b;
+            default:
+                next=a+b;
+                a=b;
+                b=next;
+                return next;
+            
+        }
+    }
+}
+
+function fibonacif2 (a,b) {
+    return function() {
+        var next = a;
+        a= b;
+        b+=next;
+        return next;
+    }
+}
+
+let from3 = fromS(3);
+
+// let from3to10 = to(from3,10);
+// while (from3to10) {
+//     from3to10 = to(from3,10);
+//     console.log(from3to10);
+// };
+
+function counter(value) {
+    return {
+        up() {
+            value+=1;
+            return value;
+        },
+        down() {
+            value-=1;
+            return value;
+        }
+    }
+ }
+
+ function revocable(binary) {
+     return {
+         invoke: function(first, second) {
+             if (binary!==undefined) {
+                 return binary(first, second)
+             }
+         },
+         revoke: function() {
+             binary = undefined;
+         }
+     }
+ }
+
+ function m(value, source) {
+     return {
+         value: value,
+         source: (typeof source==='string') ? source : String(value)
+     }
+ }
+function addm(a,b) {
+    return m(a.value+ b.value, "("+a.source+ "+"+ b.source+ ")");
+}
+
+function convertToM (a) {
+    if (typeof a === 'number') {
+        a = m(a)
+    }
+    return a;
+
+}
+
+function liftm (binary, op) {
+    return function(a,b) {
+        a = convertToM(a);
+        b = convertToM(b);
+
+        return m(
+            binary(a.value, b.value),
+            "("+a.source+ op + b.source+ ")"
+            )
+    }
+}
+
+function exp(value) {
+    return (Array.isArray(value))? value[0]( exp(value[1]), exp(value[2])):  value;
+}
+
+let incV1 = addf(1), incV2 = liftf(add)(1), incV3 = curry(add, 1);
+// console.log(`${incV1(30)}, ${incV2(30)}, ${incV3(30)} ${twice(add)(31)}  ${reverse(sub)(3,2)} `);
+// console.log(composeu(doubl,square)(5) );
+// console.log(composeb(add, mul)(2,3,7));
+// console.log(limit(add,2)(2,3));
+
+// console.log(from3(), from3(), from3());
+// console.log(fromTo(3, 7), "fromTo(3, 7)"  );
+// let from1 = fromS(1);
+// console.log(element(['a', 'ax', 'ay', 'az' ], from1)() )
+// let elm=element(['a', 'ax', 'ay', 'az' ]);
+// let collected=[];
+// let collecting = collect(from3, collected);
+// collecting();
+// collecting();
+// collecting();
+// console.log(elm(), elm(), elm());
+// console.log(collected)
+let filtering3 = filter(fromTo(0, 5), function third(v) {
+    return (v % 3) === 0;
+});
+let concat0203 = concat(fromTo(0,2), fromTo(0,3));
+
+var kl;
+do {
+    kl=concat0203();
+    console.log(kl);
+} while (kl!==undefined);
+
+let gensymfH = gensymf("H");
+let gensymfG = gensymf2("G");
+
+console.log(gensymfH(), gensymfH());
+console.log(gensymfG(), gensymfG(), gensymfG() );
+
+let fibonacciGen = fibonaccif(0,1);
+let fibonaciiGen2 = fibonacif2(0,1);
+let fib_array = [], fib_array2=[];
+for (let i = 0; i<10; i++) {
+    fib_array.push(fibonacciGen())
+    fib_array2.push(fibonaciiGen2())
+}
+// console.log(fib_array.join("#"), fib_array2.join("#"));
+
+let counterInstance = counter(10);
+    // console.log(counterInstance.up());
+    // console.log(counterInstance.down());
+let revocableAdd = revocable(add);
+    // console.log(revocableAdd.invoke(1,2));
+    // revocableAdd.revoke();
+    // console.log(revocableAdd.invoke(1,2));
+
+let unu = m("1");
+    console.log(JSON.stringify(unu));
+
+    console.log(addm(m(3),m(4)))
+
+    console.log(liftm(add,"plus" )(m(3),m(4)));
+    console.log(liftm(add,"plus" )(3,m(4)));
+var sae = [mul,5,11];
+    console.log(exp(sae));
+var nae = [ Math.sqrt, [add,[square,3], [square,4] ] ]
+ console.log(exp(nae));
+
+let addg1 = addg(2)(3)(4)(5)();
+    console.log(addg1);
+ let addg2 =   addg(12)(13)();
+    console.log(addg2, liftg(mul)(1)(2)(3)(4)(5)() );
+    
+
+// console.log('Javascript the Good Parts', add(1,1), identityf(3)() );
+
+let array_geneartor = arrayg(3)(4)(9)(0)(null)();
+    console.log(array_geneartor);
+let sqrtc = continuize(Math.sqrt);
+    sqrtc(console.log, 81);

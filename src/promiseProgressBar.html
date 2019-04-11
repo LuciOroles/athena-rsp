@@ -1,0 +1,89 @@
+<html>
+
+<head>
+    <title>Progress Bar</title>
+    <style>
+        body {
+            display: block;
+            width: 100%;
+            height: 100%;
+            margin: 2em 1em;
+        }
+
+        #progress-dialog {
+            width: 200px;
+            margin: auto;
+            border: thin solid black;
+            padding: 10px;
+            background: lightgreen;
+        }
+
+        #progress-dialog .progress-bar {
+            border: 1px solid black;
+            margin: 10px auto;
+            padding: 0;
+            height: 20px;
+        }
+
+        #progress-dialog .progress-bar>div {
+            background-color: blue;
+            margin: 0;
+            padding: 0;
+            border: none;
+            height: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .holder {
+            display: flex;
+            width: 100%;
+            height: 3em;
+            /* background: lime; */
+            text-align: center;
+        }
+
+        .progress-wrapp {
+            display: flex;
+            width: 80%;
+            height: 2em;
+            background: white;
+            margin: auto;
+            flex-direction: row;
+            justify-content:  start;
+        }
+        .prg-item {
+            width: 8%;
+            height: 100%;
+            background:#444eee;
+            margin-right: 1%;
+        }
+    </style>
+</head>
+
+<body>
+    <h4>Progress bar</h4>
+    <button id="action">Show Progress Bar</button>
+    <p id="output"></p>
+    <div id="progress-dialog" class="hidden">
+        <div class="message"></div>
+        <div class="progress-bar">
+            <div></div>
+        </div>
+        <div>
+            <button class="cancel">Cancel</button>
+        </div>
+    </div>
+    <button type="button" id="stopper"> stop iterator </button>
+    <div class="holder">
+        <div class="progress-wrapp">
+            <!-- <div class="prg-item"></div>
+            <div class="prg-item"></div>
+            <div class="prg-item"></div> -->
+        </div>
+    </div>
+</body>
+
+</html>

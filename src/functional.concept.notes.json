@@ -1,0 +1,93 @@
+{
+	"partial-application": [
+			"specialization of a general function",
+			"takes some arguments now, an the rest later",
+			"there is .bind(), that does partial-application with (this) as the first argument"
+			],
+	"currying" : [
+		"also specialize a general function",
+		"take arguments bit by bit, one at the time ()()()... keep returning a function until it recives all of the inputs"
+	],
+	"immutablilty" : [
+		"const keywork, assignment imutability",
+		"const z= [2,13,11]; z[0]=100; is valid change",
+		"Object.freeze - all the propeties are read only, at the top level"
+	],
+	"objects": [
+		"Object.create(<base>) uses the base as a model for creating variation for other objects"
+	],
+	"past-job-needs": [
+		"older browsers support"
+	],
+	"use-strict": [
+		"variables needs to tbe declared",
+		"must got at the type of the file or fn/scope",
+		"can't use `with`",
+		"eval doesn't introduce new variables into the surrounding scope",
+		" function (arguments) restrictions",
+		"some keywords become revserved: implements, inteface, yield"
+	],
+	"monads" : [
+		"functional pattern",
+		"math f return same value every time, with the same value added, map value from Enter to out",
+		"programming without side effects",
+		"come out of category theory",
+		"acumulate state",
+		"axioms of monads 3",
+		"promise = monad ",
+		{
+			"macroid" : 	"macro like function used to create another object"
+		},
+		{
+			"identity-monad":   [
+				"it is a function that returns a function",
+				"fn retunred `unit` retunrs an object",
+				"returned function it takes a value   "
+				"the retunred object `monad` has a bind method",
+				"inside monad.bin() the fn is returned with value passed"
+
+			]
+		},
+		{
+		
+			"maybe-monad" : [ "check for existance, like NaN",
+				"is used to avoid null or undefined checks" ]
+		},
+		{
+			"promise-monad" : [
+					"represents a possible future value",
+					"states of promise",
+					"event generator"
+			]
+		}
+
+	],
+	"concepts-to-look-into": [
+		"inversion of controll", 
+		"async state machine", 
+		"non local non squestial fixed by generators", 
+		"async await function pattern"
+		"iterators" ],
+	"ideas":  [
+		"generator as an interator over a data structure....could be DOM ?!"
+	],
+	"geneartors-es6": [
+		"functions that don't run to completion",
+		"indicate a pause/suspession at some part of the code",
+		"notation format of generator: function* foo() || function *foo()",
+		"iterator.next() instructs the *foo() generator to advance from it's current location  stoping to next yield or the end of the generator",
+		"In general, you’re going to have one more next(..) call than you have yield statements—the preceding snippet has one yield and two next(..) calls.",
+		"yield .. and next(..) pair together as a two-way message passing system during the execution of the generator",
+		"ES6 generators could be used as a producer of values",
+		"ES6 also adds the for..of loop, which means that a standard iterator can automatically be consumed",
+		"The for..of loop automatically calls next() for each iteration",
+		"running the for..of loop for a gen, needs to have geneator(), as a constructor"
+	],
+	"observable": [
+		"stream of events, can be wrapped in promises, but promises `fire` once",
+		"separate producer and consummer of the event",
+		"promise: adapter, hooked to an event source that produces an promise each time a new event comes thru",
+		"subscribe = end of the chain, sync processing",
+		"composing streams, key concept, model the data flow as a series of stream operations"
+	]
+}
